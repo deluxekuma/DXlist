@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../models/catalog.dart';
 import '../models/song.dart';
 import '../services/store.dart';
 import '../widgets/song_card.dart';
+import 'detail_page.dart';
 import 'search_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -39,6 +41,29 @@ class _HomePageState extends State<HomePage> {
     if (song == null) return;
     setState(() => _songs.add(song));
     await Store.save(_songs);
+  }
+
+  Future<void> _openDetails(Song song) async {
+    CatalogSong? catalog;
+    try {
+      final all = await Catalog.songs();
+      final target = Catalog.norm(song.title);
+      for (final item in all) {
+        if (item.normTitle == target) {
+          catalog = item;
+          break;
+        }
+      }
+    } catch (_) {
+      // 手動新增或離線時仍然開啟基本詳情。
+    }
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DetailPage(song: song, catalog: catalog),
+      ),
+    );
   }
 
   Future<void> _done(int index) async {
@@ -92,6 +117,7 @@ class _HomePageState extends State<HomePage> {
                     key: ValueKey(_songs[i].id),
                     song: _songs[i],
                     onDone: () => _done(i),
+                    onTap: () => _openDetails(_songs[i]),
                   ),
                 ),
       floatingActionButton: FloatingActionButton.extended(

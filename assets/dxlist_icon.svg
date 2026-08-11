@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" role="img" aria-label="黑白幾何動物圖示">
+  <rect width="1080" height="1080" fill="#fff"/>
+
+  <!-- 外圈 -->
+  <circle cx="540" cy="540" r="445" fill="#000"/>
+
+  <!-- 八個按鍵：共用同一輪廓，以圓心每 45° 等距旋轉 -->
+  <defs>
+    <path id="key" d="M475 121 Q540 112 605 121 L594 213 Q540 207 486 213 Z"/>
+  </defs>
+  <g fill="#fff">
+    <use href="#key"/>
+    <use href="#key" transform="rotate(45 540 540)"/>
+    <use href="#key" transform="rotate(90 540 540)"/>
+    <use href="#key" transform="rotate(135 540 540)"/>
+    <use href="#key" transform="rotate(180 540 540)"/>
+    <use href="#key" transform="rotate(225 540 540)"/>
+    <use href="#key" transform="rotate(270 540 540)"/>
+    <use href="#key" transform="rotate(315 540 540)"/>
+  </g>
+
+  <!-- 耳朵黑色外輪廓與白色內部 -->
+  <g>
+    <circle cx="329" cy="320" r="48" fill="#000"/>
+    <circle cx="751" cy="320" r="48" fill="#000"/>
+    <circle cx="329" cy="320" r="31" fill="#fff"/>
+    <circle cx="751" cy="320" r="31" fill="#fff"/>
+  </g>
+
+  <!-- 臉部覆蓋耳朵下緣，保留清楚的半圓耳廓 -->
+  <circle cx="540" cy="540" r="304" fill="#fff"/>
+
+  <!-- 眼睛 -->
+  <g fill="#000">
+    <ellipse cx="399" cy="628" rx="34" ry="35"/>
+    <ellipse cx="681" cy="628" rx="34" ry="35"/>
+
+    <!-- 平頂、近方形的鼻子 -->
+    <path d="M519 624 H561 Q568 624 568 632 V637 Q568 645 547 654 V681 L579 710 Q588 719 579 728 Q570 737 560 728 L540 709 L520 728 Q510 737 501 728 Q492 719 501 710 L533 681 V654 Q512 645 512 637 V632 Q512 624 519 624 Z"/>
+
+    <!-- 右下按鍵的兩個圓點 -->
+    <circle cx="774" cy="808" r="10"/>
+    <circle cx="813" cy="769" r="10"/>
+  </g>
+</svg>

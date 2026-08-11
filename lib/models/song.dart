@@ -9,6 +9,12 @@ class Song {
   /// dxrating 的曲繪檔名，從曲庫加進來時有值。
   String? imageName;
 
+  /// 原曲 BPM。
+  double? bpm;
+
+  /// 譜面物件統計。
+  Map<String, int> notes;
+
   /// 使用者自己從相冊挑的曲繪，優先於網路曲繪。
   String? localCover;
 
@@ -36,6 +42,8 @@ class Song {
     this.artist,
     this.imageName,
     this.localCover,
+    this.bpm,
+    this.notes = const {},
     this.diff = 3,
     this.utageKey,
     this.level = '',
@@ -50,6 +58,8 @@ class Song {
         title: song.title,
         artist: song.artist.isEmpty ? null : song.artist,
         imageName: song.imageName,
+        bpm: song.bpm,
+        notes: Map<String, int>.from(sheet.notes),
         diff: sheet.diff,
         utageKey: sheet.utageKey,
         level: sheet.level,
@@ -85,6 +95,8 @@ class Song {
         'artist': artist,
         'imageName': imageName,
         'localCover': localCover,
+        'bpm': bpm,
+        'notes': notes,
         'diff': diff,
         'utageKey': utageKey,
         'level': level,
@@ -99,6 +111,10 @@ class Song {
         artist: j['artist'] as String?,
         imageName: j['imageName'] as String?,
         localCover: j['localCover'] as String?,
+        bpm: (j['bpm'] as num?)?.toDouble(),
+        notes: ((j['notes'] as Map?) ?? const {}).map(
+          (key, value) => MapEntry(key.toString(), (value as num?)?.toInt() ?? 0),
+        ),
         diff: (j['diff'] ?? 3) as int,
         utageKey: j['utageKey'] as String?,
         level: (j['level'] ?? '') as String,

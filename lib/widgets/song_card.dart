@@ -16,10 +16,14 @@ class SongCard extends StatefulWidget {
   /// 長按整個區塊 = 打完了，移除。
   final VoidCallback onDone;
 
+  /// 點擊區塊 = 開啟歌曲詳情。
+  final VoidCallback? onTap;
+
   const SongCard({
     super.key,
     required this.song,
     required this.onDone,
+    this.onTap,
   });
 
   @override
@@ -120,6 +124,7 @@ class _SongCardState extends State<SongCard> {
     ].join('  ·  ');
 
     return GestureDetector(
+      onTap: widget.onTap,
       onLongPress: widget.onDone,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),

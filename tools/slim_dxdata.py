@@ -53,6 +53,8 @@ def main(src, dst):
                 'l': sh.get('level') or '',            # 官方等級 13+
                 'v': sh.get('internalLevelValue'),     # 定數 13.7
                 'r': sh.get('version') or '',          # 正式版本名
+                'q': sh.get('releaseDate') or '',      # 譜面上線日期
+                'n': sh.get('noteCounts') or {},       # 譜面物件統計
                 # 實裝狀態 bitmask：1=日服 4=海外版。0 表示已刪除。
                 #
                 # 刻意不採用 dxdata 的 cn 欄位：它明顯陳舊且不準。
@@ -71,6 +73,7 @@ def main(src, dst):
         out.append({
             'n': song['title'],
             'a': song.get('artist') or '',
+            'b': song.get('bpm'),
             'i': song.get('imageName') or '',
             'c': song.get('category') or '',
             'y': song.get('searchAcronyms') or [],

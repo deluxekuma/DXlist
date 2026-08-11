@@ -22,6 +22,12 @@ class Sheet {
   /// 正式版本名，例如 "CiRCLE PLUS"
   final String version;
 
+  /// 譜面上線日期。
+  final String releaseDate;
+
+  /// Tap / Hold / Slide / Touch / Break / Total。
+  final Map<String, int> notes;
+
   /// 實裝狀態 bitmask：1=日服 4=海外版。
   ///
   /// 刻意不記錄國服狀態，因為 dxdata 的 cn 欄位不可靠（ツユ 全曲國服
@@ -36,6 +42,8 @@ class Sheet {
     required this.level,
     this.internal,
     required this.version,
+    this.releaseDate = '',
+    this.notes = const {},
     this.regions = 5,
   });
 
@@ -79,7 +87,14 @@ class Sheet {
         level: (j['l'] ?? '') as String,
         internal: (j['v'] as num?)?.toDouble(),
         version: (j['r'] ?? '') as String,
-        // 精簡檔在日服 + 海外版都有時省略 g，預設補回 5。
+        releaseDate: (j['q'] ?? '') as String,
+        notes: ((j['n'] as Map?) ?? const {}).map(
+          (key, value) => MapEntry(
+            key.toString(),
+            (value as num?)?.toInt() ?? 0,
+          ),
+        ),
+        // 精簡檔在日服 + 海外版都有時省略 g，預設補回 5.
         regions: (j['g'] ?? 5) as int,
       );
 }
@@ -91,6 +106,9 @@ class CatalogSong {
 
   /// 曲繪檔名（不含副檔名）
   final String imageName;
+
+  /// BPM；曲庫有些特殊曲目沒有 BPM。
+  final double? bpm;
 
   /// 分類，例如「オンゲキ＆CHUNITHM」
   final String category;
@@ -111,6 +129,7 @@ class CatalogSong {
     required this.title,
     required this.artist,
     required this.imageName,
+    this.bpm,
     required this.category,
     required this.acronyms,
     required this.debutVersion,
@@ -132,6 +151,7 @@ class CatalogSong {
         title: (j['n'] ?? '') as String,
         artist: (j['a'] ?? '') as String,
         imageName: (j['i'] ?? '') as String,
+        bpm: (j['b'] as num?)?.toDouble(),
         category: (j['c'] ?? '') as String,
         acronyms:
             ((j['y'] as List?) ?? const []).map((e) => e as String).toList(),

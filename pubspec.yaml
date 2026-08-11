@@ -14,7 +14,20 @@ dependencies:
   shared_preferences: ^2.3.2
   image_picker: ^1.1.2
 
+dev_dependencies:
+  flutter_launcher_icons: ^0.14.4
+
 flutter:
   uses-material-design: true
   assets:
     - assets/dxdata_slim.json
+    - assets/dxlist_icon.svg
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/dxlist_icon.png
+  adaptive_icon_background: '#FFFFFF'
+  adaptive_icon_foreground: assets/dxlist_icon.png
+  adaptive_icon_monochrome: assets/dxlist_icon.png
+  min_sdk_android: 21

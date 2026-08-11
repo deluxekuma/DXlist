@@ -37,6 +37,12 @@ jobs:
             ls -la assets/dxdata_slim.json
           fi
 
+      - name: Convert SVG app icon to PNG
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq librsvg2-bin
+          rsvg-convert -w 1080 -h 1080 assets/dxlist_icon.svg -o assets/dxlist_icon.png
+          file assets/dxlist_icon.png
+
       # 專案裡只放 lib/ 與 pubspec.yaml，android/ 由 flutter create 現場生成。
       # flutter create 會覆寫 pubspec.yaml，所以先備份再還原。
       - name: Scaffold android project
@@ -47,6 +53,7 @@ jobs:
           cp /tmp/pubspec.yaml pubspec.yaml
           rm -rf assets && cp -r /tmp/assets assets
           flutter pub get
+          dart run flutter_launcher_icons
 
       - name: Patch AndroidManifest
         run: |
