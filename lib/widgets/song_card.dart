@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -8,7 +9,7 @@ import '../util/level.dart';
 import '../util/version.dart';
 import 'marquee.dart';
 
-/// 首頁列表裡的單首歌區塊。背景色從曲繪自動取色。
+/// 首頁列表裡的單首歌區塊。背景是曲繪高斯模糊，文字自動黑白切換。
 class SongCard extends StatefulWidget {
   final Song song;
 
@@ -27,17 +28,6 @@ class SongCard extends StatefulWidget {
 
 class _SongCardState extends State<SongCard> {
   Color? _seed;
-
-  // fromSeed 有點吃 CPU，同一個種子色只算一次。
-  static final Map<String, ColorScheme> _schemeCache = {};
-
-  static ColorScheme _schemeFor(Color seed, Brightness brightness) {
-    final key = '${seed.value}|${brightness.name}';
-    return _schemeCache.putIfAbsent(
-      key,
-      () => ColorScheme.fromSeed(seedColor: seed, brightness: brightness),
-    );
-  }
 
   @override
   void initState() {
@@ -80,6 +70,17 @@ class _SongCardState extends State<SongCard> {
     if (mounted) setState(() => _seed = c);
   }
 
+  /// 曲繪主色偏亮嗎。決定遮罩往哪邊拉、文字用黑還是白。
+  bool get _isLight => (_seed?.computeLuminance() ?? 0) > 0.45;
+
+  /// 背景太白時自動換成黑字。
+  Color get _fg {
+    if (_seed == null) return Theme.of(context).colorScheme.onSurface;
+    return _isLight ? Colors.black : Colors.white;
+  }
+
+  Color get _sub => _fg.withOpacity(0.68);
+
   /// 長按難度看精確定數。
   void _showPrecise() {
     final song = widget.song;
@@ -105,19 +106,11 @@ class _SongCardState extends State<SongCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final base = theme.colorScheme;
-
-    // 有取到曲繪主色就用它生成一組 M3 配色，沒有就沿用系統莫奈配色。
-    final scheme =
-        _seed == null ? base : _schemeFor(_seed!, theme.brightness);
-
-    final bg = scheme.secondaryContainer;
-    final fg = scheme.onSecondaryContainer;
-    final sub = fg.withOpacity(0.62);
-
     final song = widget.song;
     final d = difficultyOf(song.diff);
     final cover = _coverImage;
+    final fg = _fg;
+    final sub = _sub;
 
     // 副標題：版本 · 譜面種類 · 曲師
     final subtitle = [
@@ -130,86 +123,125 @@ class _SongCardState extends State<SongCard> {
       onLongPress: widget.onDone,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        padding: const EdgeInsets.all(9),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: bg,
           borderRadius: BorderRadius.circular(18),
+          color: theme.colorScheme.surfaceContainerHighest,
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+        child: Stack(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
-                width: 54,
-                height: 54,
-                child: cover == null
-                    ? ColoredBox(
-                        color: fg.withOpacity(0.10),
-                        child: Icon(Icons.music_note_outlined,
-                            size: 22, color: sub),
-                      )
-                    : Image(
+            // 高斯模糊背景。
+            //
+            // tileMode 用 clamp 而非 decal：decal 會讓邊緣淡出成透明，
+            // 卡片四角就會透出底色。另外整張放大 1.3 倍，把模糊邊緣
+            // 推到可視範圍外，四邊才不會有一圈糊掉的暗角。
+            if (cover != null)
+              Positioned.fill(
+                child: ClipRect(
+                  child: Transform.scale(
+                    scale: 1.3,
+                    child: ImageFiltered(
+                      imageFilter: ImageFilter.blur(
+                        sigmaX: 24,
+                        sigmaY: 24,
+                        tileMode: TileMode.clamp,
+                      ),
+                      child: Image(
                         image: cover,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => ColoredBox(
-                          color: fg.withOpacity(0.10),
-                          child: Icon(Icons.broken_image_outlined,
-                              size: 20, color: sub),
+                        errorBuilder: (_, __, ___) =>
+                            const SizedBox.shrink(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            // 遮罩層：把模糊背景整體拉向亮或暗的一邊，
+            // 保證等一下選的黑字或白字一定夠對比。
+            if (cover != null)
+              Positioned.fill(
+                child: ColoredBox(
+                  color: _isLight
+                      ? Colors.white.withOpacity(0.42)
+                      : Colors.black.withOpacity(0.38),
+                ),
+              ),
+            // 前景內容
+            Padding(
+              padding: const EdgeInsets.all(9),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: 54,
+                      height: 54,
+                      child: cover == null
+                          ? ColoredBox(
+                              color: fg.withOpacity(0.10),
+                              child: Icon(Icons.music_note_outlined,
+                                  size: 22, color: sub),
+                            )
+                          : Image(
+                              image: cover,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => ColoredBox(
+                                color: fg.withOpacity(0.10),
+                                child: Icon(Icons.broken_image_outlined,
+                                    size: 20, color: sub),
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Marquee(
+                          text: song.title,
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w400,
+                            color: fg,
+                          ),
                         ),
-                      ),
-              ),
-            ),
-            const SizedBox(width: 11),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Marquee(
-                    text: song.title,
-                    style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w400,
-                      color: fg,
+                        if (subtitle.isNotEmpty)
+                          Marquee(
+                            text: subtitle,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w400,
+                              color: sub,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                  if (subtitle.isNotEmpty)
-                    Marquee(
-                      text: subtitle,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w400,
-                        color: sub,
-                      ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onLongPress: _showPrecise,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          song.isUtage
+                              ? (song.level.isEmpty ? '宴' : song.level)
+                              : (song.level.isEmpty ? '?' : song.level),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: fg,
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        DifficultyDot(color: d.color),
+                      ],
                     ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onLongPress: _showPrecise,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    song.isUtage
-                        ? (song.level.isEmpty ? '宴' : song.level)
-                        : (song.level.isEmpty ? '?' : song.level),
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: fg,
-                      height: 1.1,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration:
-                        BoxDecoration(color: d.color, shape: BoxShape.circle),
                   ),
                 ],
               ),

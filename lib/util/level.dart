@@ -13,13 +13,37 @@ const List<Difficulty> kDifficulties = [
   Difficulty('ADV', 'ADVANCED', Color(0xFFFB9C2D)),
   Difficulty('EXP', 'EXPERT', Color(0xFFF64861)),
   Difficulty('MAS', 'MASTER', Color(0xFF9E45E2)),
-  Difficulty('Re:MAS', 'Re:MASTER', Color(0xFFBA67F8)),
+  Difficulty('Re:MAS', 'Re:MASTER', Colors.white),
   // 5 = 宴會場
   Difficulty('宴', '宴会場', Color(0xFFFF69B4)),
 ];
 
 Difficulty difficultyOf(int index) =>
     kDifficulties[index.clamp(0, kDifficulties.length - 1)];
+
+/// 難度色圓點。Re:MASTER 是純白，在亮背景上要描邊才看得見。
+class DifficultyDot extends StatelessWidget {
+  final Color color;
+  final double size;
+
+  const DifficultyDot({super.key, required this.color, this.size = 8});
+
+  @override
+  Widget build(BuildContext context) {
+    final needsBorder = color.computeLuminance() > 0.8;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: needsBorder
+            ? Border.all(color: Colors.black.withOpacity(0.25), width: 0.8)
+            : null,
+      ),
+    );
+  }
+}
 
 /// 把定數轉成遊戲內顯示的等級。
 ///

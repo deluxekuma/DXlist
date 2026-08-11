@@ -132,14 +132,7 @@ class _ManualAddPageState extends State<ManualAddPage> {
                   value: i,
                   child: Row(
                     children: [
-                      Container(
-                        width: 9,
-                        height: 9,
-                        decoration: BoxDecoration(
-                          color: kDifficulties[i].color,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
+                      DifficultyDot(color: kDifficulties[i].color, size: 9),
                       const SizedBox(width: 9),
                       Text(kDifficulties[i].full,
                           style:

@@ -287,11 +287,7 @@ class _SheetPicker extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
         child: Row(
           children: [
-            Container(
-              width: 9,
-              height: 9,
-              decoration: BoxDecoration(color: d.color, shape: BoxShape.circle),
-            ),
+            DifficultyDot(color: d.color, size: 9),
             const SizedBox(width: 11),
             Text(
               s.typeLabel,

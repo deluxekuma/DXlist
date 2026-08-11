@@ -1,0 +1,73 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # 曲庫沒上傳也沒關係，這裡會現場從 dxrating 上游生成。
+      # 已經有 assets/dxdata_slim.json 就直接沿用，不覆蓋。
+      - name: Prepare catalog
+        run: |
+          if [ -f assets/dxdata_slim.json ]; then
+            echo "使用 repo 內的曲庫："
+            ls -la assets/dxdata_slim.json
+          else
+            echo "repo 內沒有曲庫，從上游生成"
+            mkdir -p assets
+            curl -sSL --retry 3 -o /tmp/dxdata.json \
+              https://raw.githubusercontent.com/gekichumai/dxrating/main/packages/dxdata/dxdata.json
+            python3 tools/slim_dxdata.py /tmp/dxdata.json assets/dxdata_slim.json
+            ls -la assets/dxdata_slim.json
+          fi
+
+      # 專案裡只放 lib/ 與 pubspec.yaml，android/ 由 flutter create 現場生成。
+      # flutter create 會覆寫 pubspec.yaml，所以先備份再還原。
+      - name: Scaffold android project
+        run: |
+          cp pubspec.yaml /tmp/pubspec.yaml
+          cp -r assets /tmp/assets
+          flutter create --platforms=android --org derakuma --project-name dxlist .
+          cp /tmp/pubspec.yaml pubspec.yaml
+          rm -rf assets && cp -r /tmp/assets assets
+          flutter pub get
+
+      - name: Patch AndroidManifest
+        run: |
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's/android:label="[^"]*"/android:label="DXList"/' "$M"
+          # release 版預設沒有連網權限，補上才能抓曲繪。
+          grep -q 'android.permission.INTERNET' "$M" || \
+            sed -i '0,/<manifest[^>]*>/s|\(<manifest[^>]*>\)|\1\n    <uses-permission android:name="android.permission.INTERNET"/>|' "$M"
+          cat "$M"
+
+      - name: Build release APK (arm64)
+        run: flutter build apk --release --target-platform android-arm64
+
+      - name: Rename APK
+        run: |
+          mkdir -p out
+          cp build/app/outputs/flutter-apk/app-release.apk out/DXList.apk
+          ls -la out/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DXList-apk
+          path: out/DXList.apk
+          if-no-files-found: error

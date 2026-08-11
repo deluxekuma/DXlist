@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:palette_generator/palette_generator.dart';
 
-/// 從曲繪取主色，做成每首歌自己的區塊配色。算過的會快取。
+/// 從曲繪取主色。算過的會快取。
+///
+/// 取的是 dominantColor（畫面佔比最大的顏色），因為卡片背景是整張曲繪
+/// 高斯模糊後的樣子，跟平均亮度比較接近。用 vibrantColor 會被小面積的
+/// 鮮豔色帶偏，導致亮度判斷失準、文字黑白選錯。
 class CoverColor {
   static final Map<String, Color> _cache = {};
 
@@ -16,9 +20,9 @@ class CoverColor {
         size: const Size(80, 80),
         maximumColorCount: 12,
       );
-      final c = palette.vibrantColor?.color ??
-          palette.dominantColor?.color ??
-          palette.mutedColor?.color;
+      final c = palette.dominantColor?.color ??
+          palette.mutedColor?.color ??
+          palette.vibrantColor?.color;
       if (c != null) _cache[key] = c;
       return c;
     } catch (_) {

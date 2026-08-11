@@ -1,5 +1,5 @@
-name: maimai_list
-description: A play-list app for maimai DX.
+name: dxlist
+description: DXList - maimai DX play list.
 publish_to: 'none'
 version: 1.0.0+1
 

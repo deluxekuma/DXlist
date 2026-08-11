@@ -48,7 +48,7 @@ class App extends StatelessWidget {
             );
 
         return MaterialApp(
-          title: 'maimai 清單',
+          title: 'DXList',
           debugShowCheckedModeBanner: false,
           theme: _theme(lightScheme),
           darkTheme: _theme(darkScheme),
