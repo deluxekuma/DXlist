@@ -1,0 +1,20 @@
+name: maimai_list
+description: A play-list app for maimai DX.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dynamic_color: ^1.7.0
+  palette_generator: ^0.3.3+3
+  shared_preferences: ^2.3.2
+  image_picker: ^1.1.2
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/dxdata_slim.json

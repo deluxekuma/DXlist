@@ -1,0 +1,18 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+pubspec.lock
+
+# 由 CI 現場生成，不進版本控制
+android/
+ios/
+linux/
+macos/
+windows/
+web/
+
+# 編輯器
+.idea/
+.vscode/
+*.iml
