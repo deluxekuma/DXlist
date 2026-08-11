@@ -53,7 +53,7 @@ class DetailPage extends StatelessWidget {
                 ),
                 child: Transform.scale(
                   scale: 1.28,
-                  child: Image(image: cover, fit: BoxFit.cover),
+                  child: Image(image: cover!, fit: BoxFit.cover),
                 ),
               ),
             ),
@@ -157,7 +157,7 @@ class _Hero extends StatelessWidget {
                           color: secondary,
                         ),
                       )
-                    : Image(image: cover, fit: BoxFit.cover),
+                    : Image(image: cover!, fit: BoxFit.cover),
               ),
             ),
             const Spacer(),
