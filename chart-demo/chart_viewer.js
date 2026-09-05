@@ -2,8 +2,10 @@ const CHART_ID = 11377;
 const MUSIC_ID = 1377;
 const BPM = 222;
 const CANVAS_SIZE = 800;
-const JUDGE_LINE_RADIUS = 0.45;
-const APPROACH_TIME_MS = 1000;
+const CENTER_RADIUS = 0.15; // 中央圓
+const JUDGE_LINE_RADIUS = 0.35; // 判定線位置
+const NOTE_SPAWN_RADIUS = 0.65; // 音符生成位置
+const APPROACH_TIME_MS = 800; // 音符從生成到判定線的時間
 
 class ChartViewer {
   constructor() {
@@ -16,7 +18,6 @@ class ChartViewer {
     this.audio = null;
     this.playing = false;
     this.speed = 1.0;
-    this.startTime = 0;
     this.currentTime = 0;
     this.animFrame = null;
     
@@ -30,7 +31,7 @@ class ChartViewer {
     await this.loadChart();
     await this.loadAudio();
     this.parseNotes();
-    this.updateStatus('準備完成，點擊播放開始');
+    this.updateStatus(`已載入 ${this.notes.length} 個音符，準備完成`);
     this.render();
   }
   
@@ -104,56 +105,103 @@ class ChartViewer {
   }
   
   parseNotes() {
-    // 簡化版 Simai 解析器：只處理基本 Tap、Break、Hold
     const lines = this.chartData.split('\n');
-    let inNotes = false;
-    let measureIndex = 0;
-    const beatsPerMeasure = 4;
     const msPerBeat = 60000 / BPM;
     
+    let inNotes = false;
+    let currentTime = 0;
+    let currentSubdiv = 4; // 預設 4 分音符
+    
     for (let line of lines) {
-      line = line.trim();
-      if (line.startsWith('&inote_')) {
+      line = line.trim().replace(/\r/g, '');
+      
+      // 找到音符區段開始
+      if (line.startsWith('&inote_2=')) {
         inNotes = true;
         continue;
       }
-      if (inNotes && line.startsWith('&')) break;
-      if (!inNotes || !line || line.startsWith('(')) continue;
       
-      // 簡化：只抓單音符，不處理複雜語法
-      const parts = line.split(',');
-      for (let i = 0; i < parts.length; i++) {
-        const note = parts[i].trim();
-        if (!note || note === '{1}' || note === '{2}' || note === '{4}') continue;
-        
-        const timing = measureIndex * beatsPerMeasure * msPerBeat + 
-                       (i / parts.length) * beatsPerMeasure * msPerBeat;
-        
-        // 解析位置 (1-8)
-        let pos = 0;
-        let isBreak = false;
-        let isHold = false;
-        
-        if (/^\d/.test(note)) {
-          pos = parseInt(note[0]);
-          isBreak = note.includes('b');
-          isHold = note.includes('h');
-        }
-        
-        if (pos >= 1 && pos <= 8) {
-          this.notes.push({
-            time: timing,
-            position: pos,
-            type: isBreak ? 'break' : isHold ? 'hold' : 'tap',
-            angle: ((pos - 1) * 45) * Math.PI / 180
-          });
-        }
+      // 遇到下一個 & 開頭就結束
+      if (inNotes && line.startsWith('&')) break;
+      if (!inNotes || !line) continue;
+      
+      // 解析 subdivision 標記 {n}
+      const subdivMatch = line.match(/^\{(\d+)\}/);
+      if (subdivMatch) {
+        currentSubdiv = parseInt(subdivMatch[1]);
+        line = line.replace(/^\{\d+\}/, '');
       }
       
-      if (line.includes(',')) measureIndex++;
+      // 解析 BPM 標記 (222)
+      if (line.match(/^\(\d+\)/)) {
+        continue; // 暫時跳過 BPM 變化
+      }
+      
+      // 分割音符
+      const parts = line.split(',');
+      
+      for (let i = 0; i < parts.length; i++) {
+        const noteStr = parts[i].trim();
+        if (!noteStr) continue;
+        
+        const timing = currentTime + (i / parts.length) * msPerBeat * (4 / currentSubdiv);
+        
+        // 解析每個音符位置
+        this.parseNotesAtTiming(noteStr, timing);
+      }
+      
+      // 每一行代表一個節拍組
+      currentTime += msPerBeat * (4 / currentSubdiv);
     }
     
-    console.log(`已解析 ${this.notes.length} 個音符`);
+    // 按時間排序
+    this.notes.sort((a, b) => a.time - b.time);
+    console.log(`解析完成，共 ${this.notes.length} 個音符`);
+    console.log('前 10 個音符:', this.notes.slice(0, 10));
+  }
+  
+  parseNotesAtTiming(noteStr, timing) {
+    // 移除空格
+    noteStr = noteStr.replace(/\s/g, '');
+    
+    // 分割同時音符 /
+    const simultaneous = noteStr.split('/');
+    
+    for (const note of simultaneous) {
+      if (!note) continue;
+      
+      // 解析單個音符
+      let pos = 0;
+      let isBreak = false;
+      let isHold = false;
+      let isStar = false;
+      
+      // 提取位置數字 (1-8)
+      const posMatch = note.match(/^(\d)/);
+      if (!posMatch) continue;
+      
+      pos = parseInt(posMatch[1]);
+      if (pos < 1 || pos > 8) continue;
+      
+      // 檢查修飾符
+      isBreak = note.includes('b');
+      isHold = note.includes('h');
+      isStar = note.includes('x');
+      
+      this.notes.push({
+        time: timing,
+        position: pos,
+        type: isBreak ? 'break' : isHold ? 'hold' : isStar ? 'star' : 'tap',
+        angle: this.positionToAngle(pos)
+      });
+    }
+  }
+  
+  positionToAngle(pos) {
+    // maimai 位置：1=正上方，順時針，8 個位置
+    // Canvas 角度：0=右側，逆時針
+    // 需要轉換：pos 1 = -90°
+    return ((pos - 1) * 45 - 90) * Math.PI / 180;
   }
   
   togglePlay() {
@@ -222,29 +270,45 @@ class ChartViewer {
     const h = CANVAS_SIZE;
     const cx = w / 2;
     const cy = h / 2;
-    const radius = w * JUDGE_LINE_RADIUS;
+    const judgeRadius = w * JUDGE_LINE_RADIUS;
+    const centerRadius = w * CENTER_RADIUS;
     
     // 背景
     ctx.fillStyle = '#0a0a0a';
     ctx.fillRect(0, 0, w, h);
     
-    // 判定線
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.lineWidth = 3;
+    // 中央圓
+    ctx.fillStyle = '#1a1a1a';
     ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.arc(cx, cy, centerRadius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 判定線
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(cx, cy, judgeRadius, 0, Math.PI * 2);
     ctx.stroke();
     
     // 八個按鍵位置標記
-    for (let i = 0; i < 8; i++) {
-      const angle = (i * 45) * Math.PI / 180;
-      const x = cx + Math.cos(angle - Math.PI / 2) * radius;
-      const y = cy + Math.sin(angle - Math.PI / 2) * radius;
+    for (let i = 1; i <= 8; i++) {
+      const angle = this.positionToAngle(i);
+      const x = cx + Math.cos(angle) * judgeRadius;
+      const y = cy + Math.sin(angle) * judgeRadius;
       
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
       ctx.beginPath();
-      ctx.arc(x, y, 8, 0, Math.PI * 2);
+      ctx.arc(x, y, 6, 0, Math.PI * 2);
       ctx.fill();
+      
+      // 位置編號
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.font = '14px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const textX = cx + Math.cos(angle) * (judgeRadius + 20);
+      const textY = cy + Math.sin(angle) * (judgeRadius + 20);
+      ctx.fillText(i.toString(), textX, textY);
     }
     
     // 音符
@@ -252,42 +316,46 @@ class ChartViewer {
     
     for (const note of this.notes) {
       const timeDiff = note.time - currentMs;
-      if (timeDiff < -200 || timeDiff > APPROACH_TIME_MS + 500) continue;
       
-      const progress = 1 - Math.max(0, Math.min(1, timeDiff / APPROACH_TIME_MS));
-      const noteRadius = radius * (1 - progress * 0.3);
+      // 跳過已經過去太久的音符
+      if (timeDiff < -300) continue;
       
-      const x = cx + Math.cos(note.angle - Math.PI / 2) * noteRadius;
-      const y = cy + Math.sin(note.angle - Math.PI / 2) * noteRadius;
+      // 跳過還沒出現的音符
+      if (timeDiff > APPROACH_TIME_MS) continue;
       
-      const alpha = timeDiff < 0 ? Math.max(0, 1 + timeDiff / 200) : 1;
+      // 計算音符位置：從外向內移動
+      const progress = Math.max(0, Math.min(1, 1 - timeDiff / APPROACH_TIME_MS));
+      const spawnRadius = w * NOTE_SPAWN_RADIUS;
+      const noteRadius = spawnRadius - (spawnRadius - judgeRadius) * progress;
+      
+      const x = cx + Math.cos(note.angle) * noteRadius;
+      const y = cy + Math.sin(note.angle) * noteRadius;
+      
+      // 音符已經過判定線，淡出
+      const alpha = timeDiff < 0 ? Math.max(0, 1 + timeDiff / 300) : 1;
       
       // 音符外觀
+      const size = 16;
+      
       if (note.type === 'break') {
-        ctx.fillStyle = `rgba(255, 200, 0, ${alpha})`;
+        ctx.fillStyle = `rgba(255, 200, 50, ${alpha})`;
         ctx.strokeStyle = `rgba(255, 150, 0, ${alpha})`;
       } else if (note.type === 'hold') {
+        ctx.fillStyle = `rgba(255, 120, 255, ${alpha})`;
+        ctx.strokeStyle = `rgba(200, 80, 200, ${alpha})`;
+      } else if (note.type === 'star') {
+        ctx.fillStyle = `rgba(255, 255, 100, ${alpha})`;
+        ctx.strokeStyle = `rgba(255, 200, 50, ${alpha})`;
+      } else {
         ctx.fillStyle = `rgba(255, 100, 200, ${alpha})`;
         ctx.strokeStyle = `rgba(255, 50, 150, ${alpha})`;
-      } else {
-        ctx.fillStyle = `rgba(255, 100, 255, ${alpha})`;
-        ctx.strokeStyle = `rgba(200, 50, 200, ${alpha})`;
       }
       
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(x, y, 18, 0, Math.PI * 2);
+      ctx.arc(x, y, size, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-      
-      // 時機指示環
-      if (timeDiff > 0 && timeDiff < APPROACH_TIME_MS) {
-        ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 * alpha})`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(x, y, 18 + (1 - progress) * 30, 0, Math.PI * 2);
-        ctx.stroke();
-      }
     }
     
     // 時間顯示
@@ -295,9 +363,9 @@ class ChartViewer {
     const currentSec = this.currentTime / 1000;
     const timeText = `${this.formatTime(currentSec)} / ${this.formatTime(totalSec)}`;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.font = '14px monospace';
+    ctx.font = '16px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(timeText, cx, cy + radius + 30);
+    ctx.fillText(timeText, cx, h - 30);
   }
   
   formatTime(sec) {
