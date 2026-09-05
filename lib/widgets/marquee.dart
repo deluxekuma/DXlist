@@ -70,21 +70,23 @@ class _MarqueeState extends State<Marquee>
   }
 
   void _measure(BuildContext context, TextStyle style) {
-    final key = '${widget.text}|${style.fontSize}|${style.fontWeight}';
+    final key = '${widget.text}|${style.fontSize}|${style.fontWeight}|${style.fontFamily}|${MediaQuery.textScalerOf(context)}';
     if (_measuredFor == key) return;
     final tp = TextPainter(
       text: TextSpan(text: widget.text, style: style),
       maxLines: 1,
+      textScaler: MediaQuery.textScalerOf(context),
       textDirection: Directionality.of(context),
     )..layout();
     _textWidth = tp.width;
+    tp.dispose();
     _measuredFor = key;
   }
 
   @override
   Widget build(BuildContext context) {
-    final style = widget.style ?? DefaultTextStyle.of(context).style;
-    final lineHeight = (style.fontSize ?? 14) * 1.45;
+    final style = DefaultTextStyle.of(context).style.merge(widget.style);
+    final lineHeight = MediaQuery.textScalerOf(context).scale(style.fontSize ?? 14) * 1.45;
     _measure(context, style);
 
     final label = Text(

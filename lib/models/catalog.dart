@@ -24,6 +24,7 @@ class Sheet {
 
   /// 譜面上線日期。
   final String releaseDate;
+  final String designer;
 
   /// Tap / Hold / Slide / Touch / Break / Total。
   final Map<String, int> notes;
@@ -43,6 +44,7 @@ class Sheet {
     this.internal,
     required this.version,
     this.releaseDate = '',
+    this.designer = '',
     this.notes = const {},
     this.regions = 5,
   });
@@ -88,6 +90,7 @@ class Sheet {
         internal: (j['v'] as num?)?.toDouble(),
         version: (j['r'] ?? '') as String,
         releaseDate: (j['q'] ?? '') as String,
+        designer: (j['designer'] ?? '') as String,
         notes: ((j['n'] as Map?) ?? const {}).map(
           (key, value) => MapEntry(
             key.toString(),

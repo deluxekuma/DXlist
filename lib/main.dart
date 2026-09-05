@@ -14,6 +14,7 @@ class App extends StatelessWidget {
   ThemeData _theme(ColorScheme scheme) {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: 'Cubic11',
       colorScheme: scheme,
       // 避免出現純黑底，統一走 M3 的 surface。
       scaffoldBackgroundColor: scheme.surface,

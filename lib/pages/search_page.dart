@@ -1,3 +1,4 @@
+import '../widgets/cover_view.dart';
 import 'package:flutter/material.dart';
 
 import '../models/catalog.dart';
@@ -173,12 +174,7 @@ class _ResultTile extends StatelessWidget {
                 height: 44,
                 child: url == null
                     ? ColoredBox(color: scheme.surfaceContainerHighest)
-                    : Image.network(
-                        url,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            ColoredBox(color: scheme.surfaceContainerHighest),
-                      ),
+                    : CoverView(url: url),
               ),
             ),
             const SizedBox(width: 11),

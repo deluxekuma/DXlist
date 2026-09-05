@@ -53,6 +53,7 @@ def main(src, dst):
                 'l': sh.get('level') or '',            # 官方等級 13+
                 'v': sh.get('internalLevelValue'),     # 定數 13.7
                 'r': sh.get('version') or '',          # 正式版本名
+                'designer': (sh.get('noteDesigner') or '').strip() if sh.get('noteDesigner') != '-' else '',
                 'q': sh.get('releaseDate') or '',      # 譜面上線日期
                 'n': sh.get('noteCounts') or {},       # 譜面物件統計
                 # 實裝狀態 bitmask：1=日服 4=海外版。0 表示已刪除。

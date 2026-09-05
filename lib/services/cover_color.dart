@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:palette_generator/palette_generator.dart';
 
 /// 從曲繪取主色。算過的會快取。
@@ -15,6 +16,9 @@ class CoverColor {
     final hit = _cache[key];
     if (hit != null) return hit;
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getInt('coverColorV2:$key');
+      if (saved != null) return _cache[key] = Color(saved);
       final palette = await PaletteGenerator.fromImageProvider(
         image,
         size: const Size(80, 80),
@@ -23,7 +27,10 @@ class CoverColor {
       final c = palette.dominantColor?.color ??
           palette.mutedColor?.color ??
           palette.vibrantColor?.color;
-      if (c != null) _cache[key] = c;
+      if (c != null) {
+        _cache[key] = c;
+        await prefs.setInt('coverColorV2:$key', c.value);
+      }
       return c;
     } catch (_) {
       return null;

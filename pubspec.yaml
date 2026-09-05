@@ -1,7 +1,7 @@
 name: dxlist
 description: DXList - maimai DX play list.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -13,6 +13,8 @@ dependencies:
   palette_generator: ^0.3.3+3
   shared_preferences: ^2.3.2
   image_picker: ^1.1.2
+  path_provider: ^2.1.5
+  crypto: ^3.0.6
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.4
@@ -22,6 +24,11 @@ flutter:
   assets:
     - assets/dxdata_slim.json
     - assets/dxlist_icon.svg
+    - assets/badges/
+  fonts:
+    - family: Cubic11
+      fonts:
+        - asset: assets/fonts/Cubic_11.ttf
 
 flutter_launcher_icons:
   android: true
