@@ -43,6 +43,8 @@ class _DetailPageState extends State<DetailPage> {
     final scheme = Theme.of(context).colorScheme;
     final fg = scheme.onSurface;
     final sheets = catalog?.sheets ?? <Sheet>[];
+    final types = ['dx', 'std', 'utage', 'utage2p']
+      .where((type) => sheets.any((sheet) => sheet.type == type)).toList();
     final dates = sheets.map((s) => s.releaseDate).where((s) => DateTime.tryParse(s) != null).toList()..sort();
     final debut = dates.isEmpty ? '' : dates.first;
     final current = _selected;
@@ -84,8 +86,9 @@ class _DetailPageState extends State<DetailPage> {
         Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('譜面一覽', style: TextStyle(fontSize: 20)),
           const SizedBox(height: 10),
-          for (final type in ['dx', 'std', 'utage', 'utage2p'])
-            if (sheets.any((s) => s.type == type)) _group(type, sheets.where((s) => s.type == type).toList(), fg),
+          for (final type in types)
+            _group(type, sheets.where((s) => s.type == type).toList(), fg,
+              showHeader: types.length > 1),
           if (sheets.isEmpty) const Text('此項目沒有曲庫譜面資料'),
           const SizedBox(height: 22),
           const Text('詳細資訊', style: TextStyle(fontSize: 20)),
@@ -96,36 +99,68 @@ class _DetailPageState extends State<DetailPage> {
           const SizedBox(height: 20),
           const Text('音符統計', style: TextStyle(fontSize: 20)),
           for (final entry in const {'tap':'Tap', 'hold':'Hold', 'slide':'Slide', 'touch':'Touch', 'break':'Break', 'total':'總計'}.entries)
-            _row(entry.value, notes[entry.key]?.toString() ?? '未提供'),
+            if (entry.key != 'touch' || (current?.type ?? song.type) != 'std')
+              _row(entry.value, notes[entry.key]?.toString() ?? '未提供'),
           const SizedBox(height: 18),
           Text('資料來源：dxrating · 曲庫 ${Catalog.updateDate}', style: TextStyle(fontSize: 11, color: fg.withOpacity(.6))),
         ])),
       ]),
     );
   }
-  Widget _group(String type, List<Sheet> sheets, Color fg) {
+  Widget _group(String type, List<Sheet> sheets, Color fg, {required bool showHeader}) {
     sheets.sort((a,b) => a.diff.compareTo(b.diff));
+    final scheme = Theme.of(context).colorScheme;
     final baseVersion = sheets.first.version;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Row(children: [
-        ChartTypeBadge(type: type), const SizedBox(width: 12),
-        Expanded(child: Text(versionShort(baseVersion), style: TextStyle(color: fg.withOpacity(.7)))),
-      ])),
-      for (final sheet in sheets)
-        Material(color: identical(sheet, _selected) ? Theme.of(context).colorScheme.secondaryContainer : Colors.transparent,
-          borderRadius: BorderRadius.circular(12), child: InkWell(
-            borderRadius: BorderRadius.circular(12), onTap: () => setState(() => _selected = sheet),
-            child: Padding(padding: const EdgeInsets.all(10), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                DifficultyPill(diff: sheet.diff, label: sheet.utageKey), const Spacer(),
-                PreciseLevel(value: sheet.internal, fallback: sheet.level, color: fg, size: 20),
-              ]),
-              // 譜師缺資料就保留空白，不以曲師或「未知」代替。
-              Padding(padding: const EdgeInsets.only(top: 5), child: Text(sheet.designer, style: TextStyle(fontSize: 12, color: fg.withOpacity(.7)))),
-              if (sheet.version != baseVersion) Text('ver. ${versionShort(sheet.version)}', style: const TextStyle(fontSize: 11)),
-            ])),
-          )),
-    ]);
+    return Container(
+      margin: EdgeInsets.only(bottom: showHeader ? 16 : 0),
+      padding: EdgeInsets.all(showHeader ? 10 : 0),
+      decoration: showHeader ? BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: scheme.outlineVariant.withOpacity(.65)),
+      ) : null,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        if (showHeader) ...[
+          Padding(padding: const EdgeInsets.fromLTRB(6, 6, 6, 12), child: Row(children: [
+            ChartTypeBadge(type: type), const SizedBox(width: 14),
+            Expanded(child: Text(versionShort(baseVersion),
+              style: TextStyle(color: fg.withOpacity(.7), fontSize: 12))),
+          ])),
+          Divider(height: 1, color: scheme.outlineVariant.withOpacity(.65)),
+          const SizedBox(height: 6),
+        ],
+        for (final sheet in sheets)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 3),
+            child: Material(
+              color: identical(sheet, _selected) ? scheme.secondaryContainer : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => setState(() => _selected = sheet),
+                child: Padding(padding: const EdgeInsets.all(10), child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      DifficultyPill(diff: sheet.diff, label: sheet.utageKey),
+                      const Spacer(),
+                      PreciseLevel(value: sheet.internal, fallback: sheet.level,
+                        color: identical(sheet, _selected) ? scheme.onSecondaryContainer : fg, size: 20),
+                    ]),
+                    // 沒有譜師不補字，也不製造一整行無意義的空白。
+                    if (sheet.designer.trim().isNotEmpty)
+                      Padding(padding: const EdgeInsets.only(top: 5),
+                        child: Text(sheet.designer, style: TextStyle(fontSize: 12,
+                          color: (identical(sheet, _selected) ? scheme.onSecondaryContainer : fg).withOpacity(.7)))),
+                    if (sheet.version != baseVersion)
+                      Padding(padding: const EdgeInsets.only(top: 4),
+                        child: Text('ver. ${versionShort(sheet.version)}', style: const TextStyle(fontSize: 11))),
+                  ],
+                )),
+              ),
+            ),
+          ),
+      ]),
+    );
   }
   Widget _row(String label, String value) => Container(
     padding: const EdgeInsets.symmetric(vertical: 12),

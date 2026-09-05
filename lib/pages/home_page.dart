@@ -94,7 +94,7 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('主頁',
+        title: const Text('DXList',
             style: TextStyle(fontWeight: FontWeight.w400, fontSize: 19)),
       ),
       body: _loading

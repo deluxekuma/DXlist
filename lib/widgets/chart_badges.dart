@@ -8,8 +8,24 @@ class ChartTypeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (type == 'dx' || type == 'std') {
-      return Image.asset('assets/badges/$type.png', height: height, fit: BoxFit.contain,
-        semanticLabel: type == 'dx' ? 'DX 譜面' : 'STD 譜面');
+      // 素材底部帶陰影，視覺主體比圖片尺寸小：放大 18%，
+      // 並稍向下移動，讓主體中心與旁邊膠囊對齊。
+      // 預留實際寬度，避免放大後蓋到難度文字。
+      final imageHeight = height * 1.18;
+      return SizedBox(
+        height: height,
+        width: imageHeight * 140 / 52,
+        child: OverflowBox(
+          maxHeight: imageHeight,
+          child: Transform.translate(
+            offset: Offset(0, imageHeight * .035),
+            child: Image.asset('assets/badges/$type.png',
+              height: imageHeight, width: imageHeight * 140 / 52,
+              fit: BoxFit.contain,
+              semanticLabel: type == 'dx' ? 'DX 譜面' : 'STD 譜面'),
+          ),
+        ),
+      );
     }
     return Text(type == 'utage2p' ? '宴 2P' : '宴會場');
   }
