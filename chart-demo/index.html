@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>譜面確認 Demo - パラマウント☆ショータイム！！</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #1a1a1a;
+  color: #fff;
+  overflow: hidden;
+  touch-action: none;
+}
+#container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+}
+#header {
+  padding: 12px 16px;
+  background: rgba(0,0,0,.7);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  flex-shrink: 0;
+}
+#title { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
+#subtitle { font-size: 12px; opacity: .7; }
+#canvasWrap {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+#canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  image-rendering: pixelated;
+}
+#controls {
+  padding: 16px;
+  background: rgba(0,0,0,.8);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255,255,255,.1);
+  flex-shrink: 0;
+}
+#progress {
+  width: 100%;
+  height: 4px;
+  background: rgba(255,255,255,.2);
+  border-radius: 2px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  cursor: pointer;
+}
+#progressBar {
+  height: 100%;
+  background: #4a9eff;
+  width: 0;
+  transition: width .05s linear;
+}
+#buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 20px;
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background .2s;
+}
+button:active { background: rgba(255,255,255,.3); }
+button.primary {
+  background: #4a9eff;
+  font-weight: 500;
+}
+button.primary:active { background: #3a8eef; }
+#speedControl {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+}
+#speedControl button {
+  padding: 6px 12px;
+  font-size: 11px;
+}
+#status {
+  text-align: center;
+  font-size: 13px;
+  opacity: .8;
+  margin-top: 8px;
+}
+.loading { opacity: .6; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="header">
+    <div id="title">パラマウント☆ショータイム！！</div>
+    <div id="subtitle">DX BASIC · BPM 222 · 定數 5.0</div>
+  </div>
+  <div id="canvasWrap">
+    <canvas id="canvas"></canvas>
+  </div>
+  <div id="controls">
+    <div id="progress"><div id="progressBar"></div></div>
+    <div id="buttons">
+      <button id="playBtn" class="primary">▶ 播放</button>
+      <button id="resetBtn">重新開始</button>
+    </div>
+    <div id="speedControl">
+      <span>速度：</span>
+      <button data-speed="0.5">0.5x</button>
+      <button data-speed="0.75">0.75x</button>
+      <button data-speed="1" class="active">1x</button>
+      <button data-speed="1.5">1.5x</button>
+      <button data-speed="2">2x</button>
+    </div>
+    <div id="status">正在載入譜面資料…</div>
+  </div>
+</div>
+<script src="chart_viewer.js"></script>
+</body>
+</html>
