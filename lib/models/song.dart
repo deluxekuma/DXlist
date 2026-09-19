@@ -15,6 +15,9 @@ class Song {
   /// 譜面物件統計。
   Map<String, int> notes;
 
+  /// 未上線（官方宣布卻沒實裝的譜面）。
+  bool unreleased;
+
   /// 使用者自己從相冊挑的曲繪，優先於網路曲繪。
   String? localCover;
 
@@ -44,6 +47,7 @@ class Song {
     this.localCover,
     this.bpm,
     this.notes = const {},
+    this.unreleased = false,
     this.diff = 3,
     this.utageKey,
     this.level = '',
@@ -60,6 +64,7 @@ class Song {
         imageName: song.imageName,
         bpm: song.bpm,
         notes: Map<String, int>.from(sheet.notes),
+        unreleased: sheet.unreleased,
         diff: sheet.diff,
         utageKey: sheet.utageKey,
         level: sheet.level,
@@ -97,6 +102,7 @@ class Song {
         'localCover': localCover,
         'bpm': bpm,
         'notes': notes,
+        'unreleased': unreleased,
         'diff': diff,
         'utageKey': utageKey,
         'level': level,
@@ -112,6 +118,7 @@ class Song {
         imageName: j['imageName'] as String?,
         localCover: j['localCover'] as String?,
         bpm: (j['bpm'] as num?)?.toDouble(),
+        unreleased: (j['unreleased'] ?? false) as bool,
         notes: ((j['notes'] as Map?) ?? const {}).map(
           (key, value) => MapEntry(key.toString(), (value as num?)?.toInt() ?? 0),
         ),

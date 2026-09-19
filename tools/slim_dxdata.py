@@ -9,6 +9,7 @@
 
 import json
 import sys
+from pathlib import Path
 
 DIFF = {'basic': 0, 'advanced': 1, 'expert': 2, 'master': 3, 'remaster': 4}
 
@@ -60,6 +61,19 @@ def sheet_key(sh):
     那只是改版修正，不是譜面被刪掉，拿等級當身分會誤判成大量刪除。
     """
     return (sh['t'], sh.get('k') or '', sh.get('d'))
+
+
+def load_manual():
+    """讀手動維護的曲目（官方宣布卻未實裝之類，上游不會有）。
+
+    檔案位置固定放在這支腳本旁邊的 manual_songs.json。
+    """
+    path = Path(__file__).with_name('manual_songs.json')
+    try:
+        with open(path, encoding='utf-8') as f:
+            return json.load(f).get('songs', [])
+    except (OSError, ValueError):
+        return []
 
 
 def load_previous(dst):
@@ -169,6 +183,14 @@ def main(src, dst):
                     sh['g'] = 0
                     target['s'].append(sh)
                     kept_sheets.append(f"{old['n']} / {sh['t']} {sh['d']}")
+
+    # 最後才併入手動曲目：上游日後真的收錄時，以官方資料為準，這裡就略過。
+    titles = {song['n'] for song in out}
+    for manual in load_manual():
+        if manual['n'] in titles:
+            continue
+        out.append(manual)
+        print(f"手動曲目：加入 {manual['n']}（未上線）")
 
     result = {'u': data['updateTime'][:10], 'songs': clean(out)}
     with open(dst, 'w', encoding='utf-8') as f:

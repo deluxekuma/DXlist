@@ -26,6 +26,9 @@ class Sheet {
   final String releaseDate;
   final String designer;
 
+  /// 官方已宣布卻沒有實裝（例如版權問題臨時喊停）。
+  final bool unreleased;
+
   /// Tap / Hold / Slide / Touch / Break / Total。
   final Map<String, int> notes;
 
@@ -46,6 +49,7 @@ class Sheet {
     this.releaseDate = '',
     this.designer = '',
     this.notes = const {},
+    this.unreleased = false,
     this.regions = 5,
   });
 
@@ -61,6 +65,8 @@ class Sheet {
   /// 「日服限定」通常是還沒輪到海外 / 國服的新曲，國服大概打不到，
   /// 但這是推論不是實據，所以照 dxdata 的原始事實寫，不代替你下結論。
   String get statusLabel {
+    // 未上線不是「被刪掉」，兩者要分清楚。
+    if (unreleased) return '未上線';
     if (isRemoved) return '已刪除';
     if (!inJp && inIntl) return '海外版限定';
     if (inJp && !inIntl) return '日服限定';
@@ -90,6 +96,7 @@ class Sheet {
         internal: (j['v'] as num?)?.toDouble(),
         version: (j['r'] ?? '') as String,
         releaseDate: (j['q'] ?? '') as String,
+        unreleased: ((j['x'] ?? 0) as num) != 0,
         designer: (j['designer'] ?? '') as String,
         notes: ((j['n'] as Map?) ?? const {}).map(
           (key, value) => MapEntry(

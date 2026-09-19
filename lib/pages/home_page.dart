@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/catalog.dart';
 import '../models/song.dart';
 import '../services/store.dart';
+import '../util/typography.dart';
 import '../widgets/song_card.dart';
 import 'detail_page.dart';
 import 'search_page.dart';
@@ -107,21 +108,50 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('DXList',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 30,
-                letterSpacing: .5)),
+        toolbarHeight: 62,
+        titleSpacing: 20,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('DXList', style: kTitleStyle),
+            // 標題下面接一行字，標題列才不會空一大塊。
+            if (!_loading && _songs.isNotEmpty)
+              Text('待打 ${_songs.length} 首', style: captionStyle(context)),
+          ],
+        ),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _songs.isEmpty
               ? Center(
-                  child: Text(
-                    '清單是空的，右下角加一首吧',
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w400,
-                      color: scheme.onSurfaceVariant,
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.queue_music_outlined,
+                        size: 44,
+                        color: scheme.onSurfaceVariant.withOpacity(0.4),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        '清單還是空的',
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w400,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        '按右下角的「添加」把想打的譜面放進來',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w400,
+                          color: scheme.onSurfaceVariant.withOpacity(0.75),
+                        ),
+                      ),
+                    ],
                   ),
                 )
               : ListView.builder(
@@ -142,7 +172,7 @@ class _HomePageState extends State<HomePage> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: 0,
-        height: 62,
+        height: 58,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.list_alt_outlined),

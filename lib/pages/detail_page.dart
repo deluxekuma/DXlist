@@ -2,8 +2,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../models/catalog.dart';
 import '../models/song.dart';
+import '../util/typography.dart';
 import '../util/version.dart';
 import '../widgets/chart_badges.dart';
+import '../widgets/song_card.dart';
 import '../widgets/cover_view.dart';
 
 String releaseDateLabel(String raw, {DateTime? now}) {
@@ -48,10 +50,14 @@ class _DetailPageState extends State<DetailPage> {
     final dates = sheets.map((s) => s.releaseDate).where((s) => DateTime.tryParse(s) != null).toList()..sort();
     final debut = dates.isEmpty ? '' : dates.first;
     final current = _selected;
-    // 整首都被刪就寫「已刪除」，否則沿用這張譜面的狀態。
-    final status = (catalog != null && catalog.isRemoved)
-        ? '已刪除'
-        : (current?.statusLabel ?? '');
+    // 未上線最優先，其次是整首被刪，最後才是這張譜面的狀態。
+    final allUnreleased = sheets.isNotEmpty && sheets.every((s) => s.unreleased);
+    final unreleased = allUnreleased || (current?.unreleased ?? false);
+    final status = allUnreleased
+        ? '未上線'
+        : (catalog != null && catalog.isRemoved)
+            ? '已刪除'
+            : (current?.statusLabel ?? '');
     final notes = current?.notes ?? song.notes;
     final bpm = catalog?.bpm ?? song.bpm;
     return Scaffold(
@@ -64,38 +70,39 @@ class _DetailPageState extends State<DetailPage> {
                 imageFilter: ImageFilter.blur(sigmaX: 28, sigmaY: 28, tileMode: TileMode.clamp),
                 child: Image(image: image, fit: BoxFit.cover)))),
             Positioned.fill(child: ColoredBox(color: scheme.surface.withOpacity(.82))),
-            Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
-                ClipRRect(borderRadius: BorderRadius.circular(18), child: SizedBox(width: 108, height: 108,
+                ClipRRect(borderRadius: BorderRadius.circular(16), child: SizedBox(width: 96, height: 96,
                   child: CoverView(url: song.coverUrl, local: song.localCover))),
                 const Spacer(),
                 PreciseLevel(value: current?.internal ?? song.internal,
-                  fallback: current?.level ?? song.level, color: fg, size: 42),
+                  fallback: current?.level ?? song.level, color: fg, size: 36),
               ]),
-              const SizedBox(height: 16),
-              Text(song.title, style: const TextStyle(fontSize: 23, fontWeight: FontWeight.w400)),
+              const SizedBox(height: 14),
+              Text(song.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
               const SizedBox(height: 10),
               Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
                 ChartTypeBadge(type: current?.type ?? song.type, height: 26),
                 DifficultyPill(diff: current?.diff ?? song.diff, label: current?.utageKey),
+                if (unreleased) UnreleasedTag(color: fg),
               ]),
               const SizedBox(height: 12),
               Text('ver. ${versionShort(current?.version ?? song.version)}'),
               const SizedBox(height: 8),
-              Text('樂曲上線日 ${releaseDateLabel(debut)}'),
+              Text(unreleased ? '樂曲上線日 尚未上線' : '樂曲上線日 ${releaseDateLabel(debut)}'),
               if (current != null && current.releaseDate.isNotEmpty && current.releaseDate != debut)
                 Text('此譜面上線日 ${releaseDateLabel(current.releaseDate)}'),
             ])),
           ])),
         Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('譜面一覽', style: TextStyle(fontSize: 20)),
+          const Text('譜面一覽', style: kSectionStyle),
           const SizedBox(height: 10),
           for (final type in types)
             _group(type, sheets.where((s) => s.type == type).toList(), fg,
               showHeader: types.length > 1),
           if (sheets.isEmpty) const Text('此項目沒有曲庫譜面資料'),
           const SizedBox(height: 22),
-          const Text('詳細資訊', style: TextStyle(fontSize: 20)),
+          const Text('詳細資訊', style: kSectionStyle),
           _row('類別', catalog?.category ?? '手動新增'),
           // 已刪除／日服限定／海外版限定：只有在確有狀況時才多佔一列，
           // 正常曲目不顯示，免得每一首都要看一次「正常」。
@@ -104,7 +111,7 @@ class _DetailPageState extends State<DetailPage> {
           _row('BPM', bpm == null ? '未提供' : bpm.toStringAsFixed(bpm % 1 == 0 ? 0 : 1)),
           _row('譜師', current?.designer ?? ''),
           const SizedBox(height: 20),
-          const Text('音符統計', style: TextStyle(fontSize: 20)),
+          const Text('音符統計', style: kSectionStyle),
           for (final entry in const {'tap':'Tap', 'hold':'Hold', 'slide':'Slide', 'touch':'Touch', 'break':'Break', 'total':'總計'}.entries)
             if (entry.key != 'touch' || (current?.type ?? song.type) != 'std')
               _row(entry.value, notes[entry.key]?.toString() ?? '未提供'),
@@ -149,6 +156,10 @@ class _DetailPageState extends State<DetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(children: [
                       DifficultyPill(diff: sheet.diff, label: sheet.utageKey),
+                      if (sheet.unreleased) ...[
+                        const SizedBox(width: 6),
+                        UnreleasedTag(color: fg),
+                      ],
                       const Spacer(),
                       PreciseLevel(value: sheet.internal, fallback: sheet.level,
                         color: identical(sheet, _selected) ? scheme.onSecondaryContainer : fg, size: 20),

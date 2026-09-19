@@ -9,6 +9,33 @@ import 'cover_view.dart';
 import 'chart_badges.dart';
 import 'marquee.dart';
 
+/// 「未上線」標記：官方宣布過卻沒有實裝的譜面，跟「已刪除」不同。
+class UnreleasedTag extends StatelessWidget {
+  final Color color;
+
+  const UnreleasedTag({super.key, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: color.withOpacity(0.5), width: 0.8),
+      ),
+      child: Text(
+        '未上線',
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w400,
+          height: 1.1,
+          color: color.withOpacity(0.9),
+        ),
+      ),
+    );
+  }
+}
+
 class SongCard extends StatefulWidget {
   final Song song;
   final VoidCallback onDone;
@@ -59,11 +86,17 @@ class _SongCardState extends State<SongCard> {
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Marquee(text: song.title, style: TextStyle(fontSize: 16, color: fg)),
               const SizedBox(height: 5),
-              FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft,
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  ChartTypeBadge(type: song.type), const SizedBox(width: 6),
-                  DifficultyPill(diff: song.diff, label: song.isUtage ? song.utageKey : null),
-                ])),
+              Row(children: [
+                Flexible(child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft,
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    ChartTypeBadge(type: song.type), const SizedBox(width: 6),
+                    DifficultyPill(diff: song.diff, label: song.isUtage ? song.utageKey : null),
+                  ]))),
+                if (song.unreleased) ...[
+                  const SizedBox(width: 5),
+                  UnreleasedTag(color: fg),
+                ],
+              ]),
               const SizedBox(height: 5),
               Marquee(text: 'ver. ${versionShort(song.version)}', style: TextStyle(fontSize: 12, color: fg.withOpacity(.8))),
             ])),
