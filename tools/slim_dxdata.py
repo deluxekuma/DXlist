@@ -160,6 +160,9 @@ def main(src, dst):
         claimed = set()
 
         for old in previous['songs']:
+            if old.get('m'):
+                # 手動條目一律以 manual_songs.json 為準，這裡不碰。
+                continue
             old_sheets = {sheet_key(sh) for sh in old.get('s', [])}
             target = None
             for cand in pools.get((old['n'], old.get('i', '')), []):
@@ -189,7 +192,9 @@ def main(src, dst):
     for manual in load_manual():
         if manual['n'] in titles:
             continue
-        out.append(manual)
+        # 蓋上記號：更新時才認得出這是手動維護的條目，
+        # 改名或刪除時舊條目不會被「保留已刪除曲目」的邏輯救回來。
+        out.append({**manual, 'm': 1})
         print(f"手動曲目：加入 {manual['n']}（未上線）")
 
     result = {'u': data['updateTime'][:10], 'songs': clean(out)}
