@@ -69,17 +69,67 @@ jobs:
             sed -i '0,/<manifest[^>]*>/s|\(<manifest[^>]*>\)|\1\n    <uses-permission android:name="android.permission.INTERNET"/>|' "$M"
           cat "$M"
 
-      - name: Build release APK (arm64)
-        run: flutter build apk --release --target-platform android-arm64
-
-      - name: Rename APK
+      # 版本號跟著 workflow 的執行次數跑：1.0.<run number>。
+      # 每次都不一樣，Android 才會當成新版本、直接覆蓋安裝。
+      - name: Write app version
         run: |
+          VERSION="1.0.${{ github.run_number }}"
+          printf "/// 由 CI 產生，本地開發時是 'dev'。\nconst String kAppVersion = '%s';\n" "$VERSION" > lib/build_info.dart
+          cat lib/build_info.dart
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Build release APK (arm64)
+        run: |
+          flutter build apk --release --target-platform android-arm64 \
+            --build-name="$VERSION" --build-number="${{ github.run_number }}"
+
+      # 金鑰庫不進版控，改成每次建置時從 secrets 還原。
+      # 需要的 secrets：
+      #   KEYSTORE_BASE64    金鑰庫檔的 base64（base64 -w0 檔名）
+      #   KEYSTORE_PASSWORD  金鑰庫密碼
+      #   KEY_PASSWORD       私鑰密碼
+      #   KEY_ALIAS          金鑰別名（dxkuma_key）
+      - name: Restore keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          set -e
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::缺少 secret：KEYSTORE_BASE64"
+            exit 1
+          fi
+          mkdir -p ~/.signing
+          echo "$KEYSTORE_BASE64" | base64 -d > ~/.signing/dxkuma-release.jks
+          ls -la ~/.signing/dxkuma-release.jks
+
+      # 用固定金鑰簽名。
+      # 不這樣做的話，每次 CI 產生的 debug 金鑰都不同，
+      # 簽名不一致的手機就沒辦法直接覆蓋安裝，只能先解除安裝。
+      - name: Sign APK (fixed keystore)
+        env:
+          KS_PATH: /home/runner/.signing/dxkuma-release.jks
+          KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASS: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          set -e
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          BT="$(ls -d "$SDK"/build-tools/* | sort -V | tail -1)"
+          echo "使用 build-tools: $BT"
           mkdir -p out
-          cp build/app/outputs/flutter-apk/app-release.apk out/DXList.apk
+          "$BT/zipalign" -f -p 4 build/app/outputs/flutter-apk/app-release.apk out/aligned.apk
+          # 先把舊的（debug）簽名檔拿掉，再簽上固定金鑰。
+          zip -q -d out/aligned.apk "META-INF/*.RSA" "META-INF/*.SF" "META-INF/*.MF" || true
+          "$BT/apksigner" sign \
+            --ks "$KS_PATH" --ks-type JKS --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass pass:"$KS_PASS" --key-pass pass:"$KEY_PASS" \
+            --out "out/DXList-$VERSION.apk" out/aligned.apk
+          rm -f out/aligned.apk
+          "$BT/apksigner" verify --print-certs "out/DXList-$VERSION.apk"
           ls -la out/
 
       - uses: actions/upload-artifact@v4
         with:
           name: DXList-apk
-          path: out/DXList.apk
+          path: out/DXList-*.apk
           if-no-files-found: error

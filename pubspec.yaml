@@ -26,6 +26,7 @@ flutter:
     - assets/dxlist_icon.svg
     - assets/IMG_20251207_125310.png
     - assets/badges/
+    - assets/covers/
   fonts:
     - family: Cubic11
       fonts:

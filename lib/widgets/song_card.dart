@@ -51,17 +51,31 @@ class _SongCardState extends State<SongCard> {
   Future<void> _prepare() async {
     final url = widget.song.coverUrl;
     final local = widget.song.localCover;
-    if (url == null && local == null) return;
+    final asset = widget.song.coverAsset;
+    if (url == null && local == null && asset == null) return;
     try {
-      final file = local != null ? File(local) : await CoverCache.get(url!);
-      final color = await CoverColor.of(local ?? url!, FileImage(file));
+      final ImageProvider provider;
+      final String key;
+      if (local != null) {
+        provider = FileImage(File(local));
+        key = local;
+      } else if (asset != null) {
+        provider = AssetImage(asset);
+        key = asset;
+      } else {
+        provider = FileImage(await CoverCache.get(url!));
+        key = url;
+      }
+      final color = await CoverColor.of(key, provider);
       if (mounted) setState(() => _seed = color);
     } catch (_) { /* CoverView exposes retry. */ }
   }
   @override
   Widget build(BuildContext context) {
     final song = widget.song;
-    final hasCover = song.coverUrl != null || song.localCover != null;
+    final hasCover = song.coverUrl != null ||
+        song.localCover != null ||
+        song.coverAsset != null;
     final light = _seed != null && _seed!.computeLuminance() > .45;
     final fg = hasCover ? (light ? Colors.black : Colors.white) : Theme.of(context).colorScheme.onSurface;
     return GestureDetector(onTap: widget.onTap, onLongPress: widget.onDone,
@@ -71,7 +85,7 @@ class _SongCardState extends State<SongCard> {
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(20),
           color: Theme.of(context).colorScheme.surfaceContainerHighest),
         child: Stack(children: [
-          if (hasCover) Positioned.fill(child: CoverView(url: song.coverUrl, local: song.localCover,
+          if (hasCover) Positioned.fill(child: CoverView(url: song.coverUrl, local: song.localCover, asset: song.coverAsset,
             builder: (image) => Transform.scale(scale: 1.3, child: ImageFiltered(
               imageFilter: ImageFilter.blur(sigmaX: 24, sigmaY: 24, tileMode: TileMode.clamp),
               child: Image(image: image, fit: BoxFit.cover),
@@ -81,7 +95,7 @@ class _SongCardState extends State<SongCard> {
             ? Colors.white.withOpacity(.48) : Colors.black.withOpacity(.55))),
           Padding(padding: const EdgeInsets.all(11), child: Row(children: [
             ClipRRect(borderRadius: BorderRadius.circular(12), child: SizedBox(width: 62, height: 62,
-              child: CoverView(url: song.coverUrl, local: song.localCover))),
+              child: CoverView(url: song.coverUrl, local: song.localCover, asset: song.coverAsset))),
             const SizedBox(width: 10),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Marquee(text: song.title, style: TextStyle(fontSize: 16, color: fg)),

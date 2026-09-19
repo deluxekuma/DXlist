@@ -117,6 +117,9 @@ class CatalogSong {
   /// 曲繪檔名（不含副檔名）
   final String imageName;
 
+  /// assets 裡的封面路徑；官方沒有曲繪的曲目（手動條目）才有值。
+  final String coverAsset;
+
   /// BPM；曲庫有些特殊曲目沒有 BPM。
   final double? bpm;
 
@@ -139,6 +142,7 @@ class CatalogSong {
     required this.title,
     required this.artist,
     required this.imageName,
+    this.coverAsset = '',
     this.bpm,
     required this.category,
     required this.acronyms,
@@ -161,6 +165,7 @@ class CatalogSong {
         title: (j['n'] ?? '') as String,
         artist: (j['a'] ?? '') as String,
         imageName: (j['i'] ?? '') as String,
+        coverAsset: (j['coverAsset'] ?? '') as String,
         bpm: (j['b'] as num?)?.toDouble(),
         category: (j['c'] ?? '') as String,
         acronyms:

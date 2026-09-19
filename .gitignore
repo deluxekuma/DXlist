@@ -12,6 +12,11 @@ macos/
 windows/
 web/
 
+# 簽名用金鑰庫：只存在本機與 GitHub Secrets，不進版控
+signing/
+*.jks
+*.keystore
+
 # 編輯器
 .idea/
 .vscode/

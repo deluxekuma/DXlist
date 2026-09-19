@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// 標題用字體。
-///
-/// 全域字體是 Cubic11 這種像素感較重的字，小字很可愛，但放到標題上
-/// 會被拉得歪歪扭扭，所以標題獨立用系統的無襯線字體，而且不加粗
-/// ——像素風格的字體一加粗就會糊成一團。
+/// 標題用字體：跟全 app 一致走 Cubic11，只把字級放大一級。
+/// 不加粗——這種像素感的字加粗會糊成一團，之前試過很醜。
 const TextStyle kTitleStyle = TextStyle(
-  fontFamily: 'Roboto',
-  fontFamilyFallback: <String>['Noto Sans', 'sans-serif'],
   fontSize: 21,
   fontWeight: FontWeight.w400,
-  letterSpacing: 0.2,
 );
 
 /// 標題底下那行小字。

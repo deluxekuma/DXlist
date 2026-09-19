@@ -158,6 +158,7 @@ class _ResultTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final url = song.coverUrl;
+    final asset = song.coverAsset.isEmpty ? null : song.coverAsset;
 
     final version = song.debutVersion;
 
@@ -172,9 +173,9 @@ class _ResultTile extends StatelessWidget {
               child: SizedBox(
                 width: 44,
                 height: 44,
-                child: url == null
+                child: url == null && asset == null
                     ? ColoredBox(color: scheme.surfaceContainerHighest)
-                    : CoverView(url: url),
+                    : CoverView(url: url, asset: asset),
               ),
             ),
             const SizedBox(width: 11),

@@ -6,8 +6,13 @@ import '../services/cover_cache.dart';
 class CoverView extends StatefulWidget {
   final String? url;
   final String? local;
+
+  /// assets 裡的封面：官方沒有曲繪的手動曲目（例如未上線曲）用這個，
+  /// 直接解碼，不走下載與磁碟快取。
+  final String? asset;
+
   final Widget Function(ImageProvider image)? builder;
-  const CoverView({super.key, this.url, this.local, this.builder});
+  const CoverView({super.key, this.url, this.local, this.asset, this.builder});
   @override
   State<CoverView> createState() => _CoverViewState();
 }
@@ -21,12 +26,20 @@ class _CoverViewState extends State<CoverView> {
   @override
   void didUpdateWidget(CoverView old) {
     super.didUpdateWidget(old);
-    if (old.url != widget.url || old.local != widget.local) _load();
+    if (old.url != widget.url ||
+        old.local != widget.local ||
+        old.asset != widget.asset) {
+      _load();
+    }
   }
   void _load() {
     final generation = ++_generation;
     _error = null;
     _fade = false;
+    if (widget.asset != null && widget.asset!.isNotEmpty) {
+      _file = null;
+      return;
+    }
     _file = widget.local != null ? File(widget.local!) : CoverCache.memory[widget.url];
     if (_file != null || widget.url == null) return;
     CoverCache.get(widget.url!).then((file) {
@@ -38,6 +51,17 @@ class _CoverViewState extends State<CoverView> {
   }
   @override
   Widget build(BuildContext context) {
+    final asset = widget.asset;
+    if (asset != null && asset.isNotEmpty) {
+      final provider = AssetImage(asset);
+      return widget.builder?.call(provider) ??
+          Image(
+            image: provider,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) =>
+                const Center(child: Icon(Icons.broken_image_outlined)),
+          );
+    }
     if (_error != null) {
       return Center(child: IconButton(
         tooltip: '封面載入失敗，點擊重試', icon: const Icon(Icons.refresh),

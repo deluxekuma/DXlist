@@ -21,6 +21,9 @@ class Song {
   /// 使用者自己從相冊挑的曲繪，優先於網路曲繪。
   String? localCover;
 
+  /// assets 裡的封面（官方沒曲繪的曲目用）。
+  String? coverAsset;
+
   /// 0=BASIC ... 4=Re:MASTER, 5=宴會場
   int diff;
 
@@ -45,6 +48,7 @@ class Song {
     this.artist,
     this.imageName,
     this.localCover,
+    this.coverAsset,
     this.bpm,
     this.notes = const {},
     this.unreleased = false,
@@ -62,6 +66,7 @@ class Song {
         title: song.title,
         artist: song.artist.isEmpty ? null : song.artist,
         imageName: song.imageName,
+        coverAsset: song.coverAsset.isEmpty ? null : song.coverAsset,
         bpm: song.bpm,
         notes: Map<String, int>.from(sheet.notes),
         unreleased: sheet.unreleased,
@@ -100,6 +105,7 @@ class Song {
         'artist': artist,
         'imageName': imageName,
         'localCover': localCover,
+        'coverAsset': coverAsset,
         'bpm': bpm,
         'notes': notes,
         'unreleased': unreleased,
@@ -117,6 +123,7 @@ class Song {
         artist: j['artist'] as String?,
         imageName: j['imageName'] as String?,
         localCover: j['localCover'] as String?,
+        coverAsset: j['coverAsset'] as String?,
         bpm: (j['bpm'] as num?)?.toDouble(),
         unreleased: (j['unreleased'] ?? false) as bool,
         notes: ((j['notes'] as Map?) ?? const {}).map(

@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../build_info.dart';
 import '../models/catalog.dart';
 import '../models/song.dart';
 import '../util/version.dart';
@@ -59,7 +60,9 @@ class _DetailPageState extends State<DetailPage> {
             : (current?.statusLabel ?? '');
     final notes = current?.notes ?? song.notes;
     final bpm = catalog?.bpm ?? song.bpm;
-    final hasCover = song.coverUrl != null || song.localCover != null;
+    final hasCover = song.coverUrl != null ||
+        song.localCover != null ||
+        song.coverAsset != null;
     return Scaffold(
       // 讓背景延伸到 AppBar 與狀態列底下，整頁才是同一層模糊曲繪。
       extendBodyBehindAppBar: true,
@@ -69,7 +72,7 @@ class _DetailPageState extends State<DetailPage> {
         // 再用主題色壓一層，維持文字可讀性。
         if (hasCover)
           Positioned.fill(
-            child: CoverView(url: song.coverUrl, local: song.localCover,
+            child: CoverView(url: song.coverUrl, local: song.localCover, asset: song.coverAsset,
               builder: (image) => Transform.scale(
                 scale: 1.2,
                 child: ImageFiltered(
@@ -98,7 +101,7 @@ class _DetailPageState extends State<DetailPage> {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 ClipRRect(borderRadius: BorderRadius.circular(18), child: SizedBox(width: 108, height: 108,
-                  child: CoverView(url: song.coverUrl, local: song.localCover))),
+                  child: CoverView(url: song.coverUrl, local: song.localCover, asset: song.coverAsset))),
                 const Spacer(),
                 PreciseLevel(value: current?.internal ?? song.internal,
                   fallback: current?.level ?? song.level, color: fg, size: 42),
@@ -141,7 +144,7 @@ class _DetailPageState extends State<DetailPage> {
               if (entry.key != 'touch' || (current?.type ?? song.type) != 'std')
                 _row(entry.value, notes[entry.key]?.toString() ?? '未提供'),
             const SizedBox(height: 18),
-            Text('資料來源：dxrating · 曲庫 ${Catalog.updateDate}', style: TextStyle(fontSize: 11, color: fg.withOpacity(.6))),
+            Text('資料來源：dxrating · 曲庫 ${Catalog.updateDate} · DXList $kAppVersion', style: TextStyle(fontSize: 11, color: fg.withOpacity(.6))),
             ])),
           ],
         )),

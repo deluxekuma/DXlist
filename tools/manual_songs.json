@@ -6,7 +6,8 @@
     "x=1 表示未上線；g 是地區 bitmask（1=日服、4=海外版），未上線一律 0。",
     "d 是難度（0=BASIC 1=ADVANCED 2=EXPERT 3=MASTER 4=Re:MASTER 5=宴會場）。",
     "曲名用官方日文原名；另外補 y（搜尋縮寫），讓英文／中文譯名也搜得到。",
-    "c 是分類，字串要跟曲庫其它曲子一致（niconico＆ボーカロイド／maimai／東方Project 等）。"
+    "c 是分類，字串要跟曲庫其它曲子一致（niconico＆ボーカロイド／maimai／東方Project 等）。",
+    "coverAsset：官方沒有曲繪時，直接指定 assets 裡的圖當封面（maimai 沒收錄的曲子用原曲封面）。"
   ],
   "songs": [
     {
@@ -43,7 +44,8 @@
           "g": 0
         }
       ],
-      "b": 162
+      "b": 162,
+      "coverAsset": "assets/covers/loop_the_rooms.png"
     }
   ]
 }
