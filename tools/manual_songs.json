@@ -2,16 +2,18 @@
   "_note": [
     "上游 dxdata 沒有的曲目：例如官方已宣布、卻因故沒有實裝的譜面。",
     "每次更新曲庫時 tools/slim_dxdata.py 會把這裡的資料併進 assets/dxdata_slim.json。",
+    "這個版本的新曲一律是 DX 譜，沒有標準譜，所以 t 固定 dx。",
     "x=1 表示未上線；g 是地區 bitmask（1=日服、4=海外版），未上線一律 0。",
     "d 是難度（0=BASIC 1=ADVANCED 2=EXPERT 3=MASTER 4=Re:MASTER 5=宴會場）。",
-    "曲名／曲師／譜面類型是照官方公告手動填的，日後有正式資料請直接改這裡。"
+    "曲名用官方日文原名；另外補 y（搜尋縮寫），讓英文／中文譯名也搜得到。"
   ],
   "songs": [
     {
-      "n": "Looping Room",
+      "n": "ループザルーム",
       "a": "ルシノ",
       "c": "maimai",
       "r": "MAGiCAL",
+      "y": ["Looping Room", "loopingroom", "ループザルーム", "回環之室", "回环之室"],
       "s": [
         {
           "t": "dx",
