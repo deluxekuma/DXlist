@@ -48,6 +48,10 @@ class _DetailPageState extends State<DetailPage> {
     final dates = sheets.map((s) => s.releaseDate).where((s) => DateTime.tryParse(s) != null).toList()..sort();
     final debut = dates.isEmpty ? '' : dates.first;
     final current = _selected;
+    // 整首都被刪就寫「已刪除」，否則沿用這張譜面的狀態。
+    final status = (catalog != null && catalog.isRemoved)
+        ? '已刪除'
+        : (current?.statusLabel ?? '');
     final notes = current?.notes ?? song.notes;
     final bpm = catalog?.bpm ?? song.bpm;
     return Scaffold(
@@ -93,6 +97,9 @@ class _DetailPageState extends State<DetailPage> {
           const SizedBox(height: 22),
           const Text('詳細資訊', style: TextStyle(fontSize: 20)),
           _row('類別', catalog?.category ?? '手動新增'),
+          // 已刪除／日服限定／海外版限定：只有在確有狀況時才多佔一列，
+          // 正常曲目不顯示，免得每一首都要看一次「正常」。
+          if (status.isNotEmpty) _row('狀態', status),
           _row('曲師', catalog?.artist ?? song.artist ?? ''),
           _row('BPM', bpm == null ? '未提供' : bpm.toStringAsFixed(bpm % 1 == 0 ? 0 : 1)),
           _row('譜師', current?.designer ?? ''),

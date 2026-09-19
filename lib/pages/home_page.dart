@@ -47,11 +47,24 @@ class _HomePageState extends State<HomePage> {
     CatalogSong? catalog;
     try {
       final all = await Catalog.songs();
-      final target = Catalog.norm(song.title);
-      for (final item in all) {
-        if (item.normTitle == target) {
-          catalog = item;
-          break;
+      // 先認曲繪檔名：上游同一首曲的曲名不變、曲繪檔名也穩定，
+      // 但曲庫裡有同名的不同曲（例如兩首 Link），只比曲名會抓錯那首。
+      final image = song.imageName;
+      if (image != null && image.isNotEmpty) {
+        for (final item in all) {
+          if (item.imageName == image) {
+            catalog = item;
+            break;
+          }
+        }
+      }
+      if (catalog == null) {
+        final target = Catalog.norm(song.title);
+        for (final item in all) {
+          if (item.normTitle == target) {
+            catalog = item;
+            break;
+          }
         }
       }
     } catch (_) {
@@ -95,7 +108,8 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('DXList',
-            style: TextStyle(fontWeight: FontWeight.w400, fontSize: 19)),
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 30,
+                letterSpacing: .5)),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

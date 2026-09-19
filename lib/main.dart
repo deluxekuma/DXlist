@@ -2,6 +2,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 
 import 'pages/home_page.dart';
+import 'widgets/app_background.dart';
 
 void main() => runApp(const App());
 
@@ -16,16 +17,17 @@ class App extends StatelessWidget {
       useMaterial3: true,
       fontFamily: 'Cubic11',
       colorScheme: scheme,
-      // 避免出現純黑底，統一走 M3 的 surface。
-      scaffoldBackgroundColor: scheme.surface,
+      // 背景交給 AppBackground 疊圖，Scaffold 本身要透明才看得到。
+      // AppBackground 底層仍是 scheme.surface，所以純色底沒有被拿掉。
+      scaffoldBackgroundColor: Colors.transparent,
       appBarTheme: AppBarTheme(
-        backgroundColor: scheme.surface,
+        backgroundColor: Colors.transparent,
         foregroundColor: scheme.onSurface,
         elevation: 0,
         scrolledUnderElevation: 2,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: scheme.surfaceContainer,
+        backgroundColor: scheme.surfaceContainer.withOpacity(.86),
         labelTextStyle: const WidgetStatePropertyAll(
           TextStyle(fontSize: 11.5, fontWeight: FontWeight.w400),
         ),
@@ -53,6 +55,10 @@ class App extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           theme: _theme(lightScheme),
           darkTheme: _theme(darkScheme),
+          // 掛在 builder 而不是 home：這樣 SearchPage、DetailPage 這些
+          // 推入的路由也同樣疊在背景圖上，不會只有首頁有圖。
+          builder: (context, child) =>
+              AppBackground(child: child ?? const SizedBox.shrink()),
           home: const HomePage(),
         );
       },
