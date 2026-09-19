@@ -13,15 +13,6 @@ const TextStyle kTitleStyle = TextStyle(
   letterSpacing: 0.2,
 );
 
-/// 區塊標題（詳情頁的「譜面一覽」「詳細資訊」等）。
-const TextStyle kSectionStyle = TextStyle(
-  fontFamily: 'Roboto',
-  fontFamilyFallback: <String>['Noto Sans', 'sans-serif'],
-  fontSize: 15.5,
-  fontWeight: FontWeight.w500,
-  letterSpacing: 0.3,
-);
-
 /// 標題底下那行小字。
 TextStyle captionStyle(BuildContext context) => TextStyle(
       fontSize: 11.5,

@@ -172,7 +172,7 @@ class _HomePageState extends State<HomePage> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: 0,
-        height: 58,
+        height: 62,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.list_alt_outlined),

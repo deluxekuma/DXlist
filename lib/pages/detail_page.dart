@@ -2,7 +2,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../models/catalog.dart';
 import '../models/song.dart';
-import '../util/typography.dart';
 import '../util/version.dart';
 import '../widgets/chart_badges.dart';
 import '../widgets/song_card.dart';
@@ -60,26 +59,52 @@ class _DetailPageState extends State<DetailPage> {
             : (current?.statusLabel ?? '');
     final notes = current?.notes ?? song.notes;
     final bpm = catalog?.bpm ?? song.bpm;
+    final hasCover = song.coverUrl != null || song.localCover != null;
     return Scaffold(
+      // 讓背景延伸到 AppBar 與狀態列底下，整頁才是同一層模糊曲繪。
+      extendBodyBehindAppBar: true,
       appBar: AppBar(title: const Text('歌曲詳情')),
-      body: ListView(children: [
-        ClipRRect(borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-          child: Stack(children: [
-            Positioned.fill(child: CoverView(url: song.coverUrl, local: song.localCover,
-              builder: (image) => ImageFiltered(
-                imageFilter: ImageFilter.blur(sigmaX: 28, sigmaY: 28, tileMode: TileMode.clamp),
-                child: Image(image: image, fit: BoxFit.cover)))),
-            Positioned.fill(child: ColoredBox(color: scheme.surface.withOpacity(.82))),
-            Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      body: Stack(children: [
+        // 全頁背景＝這首歌曲繪本身的高斯模糊（刻意不用 app 那張背景圖），
+        // 再用主題色壓一層，維持文字可讀性。
+        if (hasCover)
+          Positioned.fill(
+            child: CoverView(url: song.coverUrl, local: song.localCover,
+              builder: (image) => Transform.scale(
+                scale: 1.2,
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(
+                      sigmaX: 34, sigmaY: 34, tileMode: TileMode.clamp),
+                  child: Image(image: image, fit: BoxFit.cover),
+                ),
+              ),
+            ),
+          ),
+        Positioned.fill(
+          child: ColoredBox(
+            // 沒有曲繪時直接蓋滿主題色，免得透出 app 的背景圖。
+            color: hasCover ? scheme.surface.withOpacity(.82) : scheme.surface,
+          ),
+        ),
+        // 內容疊在上面，整頁含 AppBar 都看得到底下的模糊曲繪。
+        Positioned.fill(child: ListView(
+          // body 現在畫在 AppBar 後面，內容要讓開頂部。
+          padding: EdgeInsets.only(
+            top: MediaQuery.paddingOf(context).top + kToolbarHeight,
+          ),
+          children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
-                ClipRRect(borderRadius: BorderRadius.circular(16), child: SizedBox(width: 96, height: 96,
+                ClipRRect(borderRadius: BorderRadius.circular(18), child: SizedBox(width: 108, height: 108,
                   child: CoverView(url: song.coverUrl, local: song.localCover))),
                 const Spacer(),
                 PreciseLevel(value: current?.internal ?? song.internal,
-                  fallback: current?.level ?? song.level, color: fg, size: 36),
+                  fallback: current?.level ?? song.level, color: fg, size: 42),
               ]),
-              const SizedBox(height: 14),
-              Text(song.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
+              const SizedBox(height: 16),
+              Text(song.title, style: const TextStyle(fontSize: 23, fontWeight: FontWeight.w400)),
               const SizedBox(height: 10),
               Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
                 ChartTypeBadge(type: current?.type ?? song.type, height: 26),
@@ -92,32 +117,34 @@ class _DetailPageState extends State<DetailPage> {
               Text(unreleased ? '樂曲上線日 尚未上線' : '樂曲上線日 ${releaseDateLabel(debut)}'),
               if (current != null && current.releaseDate.isNotEmpty && current.releaseDate != debut)
                 Text('此譜面上線日 ${releaseDateLabel(current.releaseDate)}'),
+            ]),
+          ),
+          Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('譜面一覽', style: TextStyle(fontSize: 20)),
+            const SizedBox(height: 10),
+            for (final type in types)
+              _group(type, sheets.where((s) => s.type == type).toList(), fg,
+                showHeader: types.length > 1),
+            if (sheets.isEmpty) const Text('此項目沒有曲庫譜面資料'),
+            const SizedBox(height: 22),
+            const Text('詳細資訊', style: TextStyle(fontSize: 20)),
+            _row('類別', catalog?.category ?? '手動新增'),
+            // 已刪除／日服限定／海外版限定：只有在確有狀況時才多佔一列，
+            // 正常曲目不顯示，免得每一首都要看一次「正常」。
+            if (status.isNotEmpty) _row('狀態', status),
+            _row('曲師', catalog?.artist ?? song.artist ?? ''),
+            _row('BPM', bpm == null ? '未提供' : bpm.toStringAsFixed(bpm % 1 == 0 ? 0 : 1)),
+            _row('譜師', current?.designer ?? ''),
+            const SizedBox(height: 20),
+            const Text('音符統計', style: TextStyle(fontSize: 20)),
+            for (final entry in const {'tap':'Tap', 'hold':'Hold', 'slide':'Slide', 'touch':'Touch', 'break':'Break', 'total':'總計'}.entries)
+              if (entry.key != 'touch' || (current?.type ?? song.type) != 'std')
+                _row(entry.value, notes[entry.key]?.toString() ?? '未提供'),
+            const SizedBox(height: 18),
+            Text('資料來源：dxrating · 曲庫 ${Catalog.updateDate}', style: TextStyle(fontSize: 11, color: fg.withOpacity(.6))),
             ])),
-          ])),
-        Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('譜面一覽', style: kSectionStyle),
-          const SizedBox(height: 10),
-          for (final type in types)
-            _group(type, sheets.where((s) => s.type == type).toList(), fg,
-              showHeader: types.length > 1),
-          if (sheets.isEmpty) const Text('此項目沒有曲庫譜面資料'),
-          const SizedBox(height: 22),
-          const Text('詳細資訊', style: kSectionStyle),
-          _row('類別', catalog?.category ?? '手動新增'),
-          // 已刪除／日服限定／海外版限定：只有在確有狀況時才多佔一列，
-          // 正常曲目不顯示，免得每一首都要看一次「正常」。
-          if (status.isNotEmpty) _row('狀態', status),
-          _row('曲師', catalog?.artist ?? song.artist ?? ''),
-          _row('BPM', bpm == null ? '未提供' : bpm.toStringAsFixed(bpm % 1 == 0 ? 0 : 1)),
-          _row('譜師', current?.designer ?? ''),
-          const SizedBox(height: 20),
-          const Text('音符統計', style: kSectionStyle),
-          for (final entry in const {'tap':'Tap', 'hold':'Hold', 'slide':'Slide', 'touch':'Touch', 'break':'Break', 'total':'總計'}.entries)
-            if (entry.key != 'touch' || (current?.type ?? song.type) != 'std')
-              _row(entry.value, notes[entry.key]?.toString() ?? '未提供'),
-          const SizedBox(height: 18),
-          Text('資料來源：dxrating · 曲庫 ${Catalog.updateDate}', style: TextStyle(fontSize: 11, color: fg.withOpacity(.6))),
-        ])),
+          ],
+        )),
       ]),
     );
   }
