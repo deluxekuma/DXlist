@@ -129,6 +129,9 @@ class CatalogSong {
   /// 搜尋用縮寫，例如 ["yzkc"]
   final List<String> acronyms;
 
+  /// 原定上線日：官方排定的日期（未上線的曲子才有值，例如臨時喊停的）。
+  final String scheduledRelease;
+
   /// 初出版本（所有譜面裡最早的那個）
   final String debutVersion;
 
@@ -147,6 +150,7 @@ class CatalogSong {
     required this.category,
     required this.acronyms,
     required this.debutVersion,
+    this.scheduledRelease = '',
     required this.sheets,
   })  : normTitle = Catalog.norm(title),
         normArtist = Catalog.norm(artist);
@@ -171,6 +175,7 @@ class CatalogSong {
         acronyms:
             ((j['y'] as List?) ?? const []).map((e) => e as String).toList(),
         debutVersion: (j['v0'] ?? '') as String,
+        scheduledRelease: (j['scheduledRelease'] ?? '') as String,
         sheets: ((j['s'] as List?) ?? const [])
             .map((e) => Sheet.fromJson(e as Map<String, dynamic>))
             .toList(),

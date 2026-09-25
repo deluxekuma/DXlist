@@ -60,6 +60,7 @@ class _DetailPageState extends State<DetailPage> {
             : (current?.statusLabel ?? '');
     final notes = current?.notes ?? song.notes;
     final bpm = catalog?.bpm ?? song.bpm;
+    final scheduled = catalog?.scheduledRelease ?? '';
     final hasCover = song.coverUrl != null ||
         song.localCover != null ||
         song.coverAsset != null;
@@ -117,7 +118,12 @@ class _DetailPageState extends State<DetailPage> {
               const SizedBox(height: 12),
               Text('ver. ${versionShort(current?.version ?? song.version)}'),
               const SizedBox(height: 8),
-              Text(unreleased ? '樂曲上線日 尚未上線' : '樂曲上線日 ${releaseDateLabel(debut)}'),
+              if (!unreleased)
+                Text('樂曲上線日 ${releaseDateLabel(debut)}')
+              else if (scheduled.isEmpty)
+                const Text('樂曲上線日 尚未上線')
+              else
+                Text('原定上線日 ${releaseDateLabel(scheduled)}（尚未實裝）'),
               if (current != null && current.releaseDate.isNotEmpty && current.releaseDate != debut)
                 Text('此譜面上線日 ${releaseDateLabel(current.releaseDate)}'),
             ]),

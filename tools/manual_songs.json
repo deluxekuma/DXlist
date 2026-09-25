@@ -2,12 +2,15 @@
   "_note": [
     "上游 dxdata 沒有的曲目：例如官方已宣布、卻因故沒有實裝的譜面。",
     "每次更新曲庫時 tools/slim_dxdata.py 會把這裡的資料併進 assets/dxdata_slim.json。",
-    "這個版本的新曲一律是 DX 譜，沒有標準譜，所以 t 固定 dx。",
+    "曲名用官方日文原名；y 是搜尋縮寫（英文名、中文譯名，去空白小寫）。",
     "x=1 表示未上線；g 是地區 bitmask（1=日服、4=海外版），未上線一律 0。",
     "d 是難度（0=BASIC 1=ADVANCED 2=EXPERT 3=MASTER 4=Re:MASTER 5=宴會場）。",
-    "曲名用官方日文原名；另外補 y（搜尋縮寫），讓英文／中文譯名也搜得到。",
-    "c 是分類，字串要跟曲庫其它曲子一致（niconico＆ボーカロイド／maimai／東方Project 等）。",
-    "coverAsset：官方沒有曲繪時，直接指定 assets 裡的圖當封面（maimai 沒收錄的曲子用原曲封面）。"
+    "coverAsset＝assets 內的官方曲繪；b＝BPM；n＝音符統計。",
+    "n 的算法：拿 1.70 的 ma2 裡 T_REC_* 換算成 dxdata 的 noteCounts，",
+    "已用 162 張 DX 譜面驗證完全相符：",
+    "  tap = TAP+XTP+STR+XST、hold = HLD+XHO+THO、slide = SLD、touch = TTP、",
+    "  break = BRK+BXX+BXH+BHO+BSL+BST+XBS、total = ALL。",
+    "scheduledRelease：官方原本排定的上線日（Music.xml 的 netOpenName），未上線時詳情頁會顯示這天。"
   ],
   "songs": [
     {
@@ -15,6 +18,8 @@
       "a": "ルシノ",
       "c": "niconico＆ボーカロイド",
       "r": "MAGiCAL",
+      "b": 162,
+      "coverAsset": "assets/covers/loop_the_rooms.jpg",
       "y": [
         "Looping Room",
         "loopingroom",
@@ -27,12 +32,54 @@
       "s": [
         {
           "t": "dx",
+          "d": 0,
+          "l": "3",
+          "v": 3.0,
+          "designer": "",
+          "x": 1,
+          "g": 0,
+          "n": {
+            "tap": 155,
+            "hold": 17,
+            "slide": 7,
+            "touch": 6,
+            "break": 3,
+            "total": 188
+          }
+        },
+        {
+          "t": "dx",
+          "d": 1,
+          "l": "6",
+          "v": 6.5,
+          "designer": "",
+          "x": 1,
+          "g": 0,
+          "n": {
+            "tap": 253,
+            "hold": 16,
+            "slide": 6,
+            "touch": 21,
+            "break": 3,
+            "total": 299
+          }
+        },
+        {
+          "t": "dx",
           "d": 2,
           "l": "10",
           "v": 10.2,
-          "designer": "はっぴー",
+          "designer": "発光ビーバー",
           "x": 1,
-          "g": 0
+          "g": 0,
+          "n": {
+            "tap": 352,
+            "hold": 43,
+            "slide": 41,
+            "touch": 17,
+            "break": 22,
+            "total": 475
+          }
         },
         {
           "t": "dx",
@@ -41,11 +88,18 @@
           "v": 13.3,
           "designer": "はっぴー",
           "x": 1,
-          "g": 0
+          "g": 0,
+          "n": {
+            "tap": 484,
+            "hold": 94,
+            "slide": 145,
+            "touch": 32,
+            "break": 15,
+            "total": 770
+          }
         }
       ],
-      "b": 162,
-      "coverAsset": "assets/covers/loop_the_rooms.png"
+      "scheduledRelease": "2026-09-17"
     }
   ]
 }
